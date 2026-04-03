@@ -7,7 +7,7 @@
 // ============================================================
 // SECTION 1: IMPORTS
 // ============================================================
-import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
+import React, { useState, useEffect, useMemo, useRef } from 'react'
 import { Canvas, useFrame } from '@react-three/fiber'
 import { OrbitControls, Text, Line, Html } from '@react-three/drei'
 import * as THREE from 'three'
@@ -824,7 +824,6 @@ function AssetSphere({ asset, position, isSelected, onSelect }: {
         color="#e2e8f0"
         anchorX="center"
         anchorY="bottom"
-        font={undefined}
       >
         {asset.labelKo}
       </Text>
@@ -834,7 +833,6 @@ function AssetSphere({ asset, position, isSelected, onSelect }: {
         color={asset.color}
         anchorX="center"
         anchorY="bottom"
-        font={undefined}
       >
         {(asset.currentWeight * 100).toFixed(1)}%
       </Text>
@@ -861,7 +859,7 @@ function CorrelationLinks({ assets, positions }: {
   assets: AssetConfig[]
   positions: [number, number, number][]
 }) {
-  const lines: { points: [number, number, number][]; color: string; opacity: number }[] = []
+  const lines: { points: [number, number, number][]; color: string; opacity: number; corr: number }[] = []
 
   for (let i = 0; i < assets.length; i++) {
     for (let j = i + 1; j < assets.length; j++) {
@@ -872,6 +870,7 @@ function CorrelationLinks({ assets, positions }: {
         points: [positions[i], positions[j]],
         color,
         opacity: Math.abs(corr) * 0.5,
+        corr,
       })
     }
   }
@@ -883,7 +882,7 @@ function CorrelationLinks({ assets, positions }: {
           key={i}
           points={line.points}
           color={line.color}
-          lineWidth={Math.abs(CORRELATION_MATRIX[Math.floor(i / assets.length)][i % assets.length]) * 3 + 0.5}
+          lineWidth={Math.abs(line.corr) * 3 + 0.5}
           transparent
           opacity={line.opacity}
         />
@@ -1001,7 +1000,7 @@ function Scene3D({ state, positions }: { state: PortfolioState; positions: [numb
         minPolarAngle={0.2}
         maxPolarAngle={Math.PI / 2.2}
         target={[0, 0, 0]}
-        touches={{ ONE: THREE.TOUCH.ROTATE, TWO: THREE.TOUCH.DOLLY_PAN }}
+        touches={{ ONE: 0, TWO: 1 }}
       />
     </>
   )
@@ -1288,8 +1287,8 @@ function CorrelationHeatmap({ assets }: { assets: AssetConfig[] }) {
         ))}
         {/* 데이터 행 */}
         {assets.map((a, i) => (
-          <>
-            <div key={`label-${a.id}`} className="text-[8px] text-slate-500 text-right pr-1 leading-5 truncate">{a.label.split(' ')[0]}</div>
+          <React.Fragment key={a.id}>
+            <div className="text-[8px] text-slate-500 text-right pr-1 leading-5 truncate">{a.label.split(' ')[0]}</div>
             {assets.map((_, j) => {
               const corr = CORRELATION_MATRIX[i][j]
               const absCorr = Math.abs(corr)
@@ -1311,7 +1310,7 @@ function CorrelationHeatmap({ assets }: { assets: AssetConfig[] }) {
                 </div>
               )
             })}
-          </>
+          </React.Fragment>
         ))}
       </div>
     </div>
